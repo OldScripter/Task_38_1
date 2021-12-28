@@ -1,90 +1,79 @@
+#include <QPushButton>
 #include <QPaintEvent>
 #include <QApplication>
-#include <QSlider>
 #include <QPixmap>
 #include <QWidget>
 #include <QPainter>
-#include <QVBoxLayout>
+#include <QTimer>
 #include <iostream>
 
-class CircleIndicator : public QWidget
+class ImageButton : public QPushButton
 {
     Q_OBJECT
-
 public:
-    CircleIndicator() = default;
-    CircleIndicator(QWidget* parent);
+    ImageButton() = default;
+    ImageButton (QWidget* parent);
     void paintEvent(QPaintEvent* e) override;
+    QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
-    void setGreen();
-    void setYellow();
-    void setRed();
+    void keyPressEvent(QKeyEvent* e) override;
 
 public slots:
-    void setValue(int value);
-
+    void setUp();
+    void setDown();
 
 private:
-    QPixmap greenCircle;
-    QPixmap yellowCircle;
-    QPixmap redCircle;
-    QPixmap currentSprite;
+    QPixmap mCurrentButtonPixmap;
+    QPixmap mButtonDownPixmap;
+    QPixmap mButtonUpPixmap;
+    //bool isDown {false};
 };
 
-CircleIndicator::CircleIndicator(QWidget* parent)
+ImageButton::ImageButton(QWidget* parent)
 {
-
     setParent(parent);
-    setToolTip("Indicator");
+    setToolTip("Click me!");
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    greenCircle = QPixmap(":/GreenCircle.png");
-    yellowCircle = QPixmap(":/YellowCircle.png");
-    redCircle = QPixmap(":/RedCircle.png");
-    currentSprite = greenCircle;
-    setGeometry(currentSprite.rect());
+    mButtonUpPixmap = QPixmap(":/GreenCircle.png");
+    mButtonDownPixmap = QPixmap(":/YellowCircle.png");
+    mCurrentButtonPixmap = mButtonUpPixmap;
+    setGeometry(mCurrentButtonPixmap.rect());
+    connect (this, &QPushButton::clicked, this, &ImageButton::setDown);
 }
 
-void CircleIndicator::paintEvent(QPaintEvent* e)
+void ImageButton::paintEvent(QPaintEvent* e)
 {
     QPainter p(this);
-    p.drawPixmap(e->rect(), currentSprite);
+    p.drawPixmap(e->rect(), mCurrentButtonPixmap);
 }
 
-QSize CircleIndicator::minimumSizeHint() const
+QSize ImageButton::sizeHint() const
 {
     return QSize(100, 100);
 }
 
-void CircleIndicator::setGreen()
+QSize ImageButton::minimumSizeHint() const
 {
-    currentSprite = greenCircle;
-    update();
+    return sizeHint();
 }
 
-void CircleIndicator::setYellow()
+void ImageButton::keyPressEvent(QKeyEvent *e)
 {
-    currentSprite = yellowCircle;
-    update();
+    setDown();
 }
 
-void CircleIndicator::setRed()
+void ImageButton::setDown()
 {
-    currentSprite = redCircle;
+    mCurrentButtonPixmap = mButtonDownPixmap;
     update();
+    QTimer::singleShot(100, this, &ImageButton::setUp);
 }
 
-void CircleIndicator::setValue(int value)
+void ImageButton::setUp()
 {
-    if (value <= 33)
-        setGreen();
-    else if (value > 33 && value <= 66)
-        setYellow();
-    else
-        setRed();
-
+    mCurrentButtonPixmap = mButtonUpPixmap;
     update();
 }
-
 
 #include "main.moc"
 
@@ -92,25 +81,11 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-    auto* qvBox = new QVBoxLayout(nullptr);
-    auto* window = new QWidget();
-    window->setFixedSize(240, 290);
-
-    auto* circleIndicator = new CircleIndicator(window);
-    circleIndicator->setFixedSize (200, 200);
-    circleIndicator->move (20, 10);
-
-    auto* slider = new QSlider(Qt::Horizontal);
-    slider->setMinimum(0);
-    slider->setMaximum(100);
-    slider->resize(200, 50);
-    slider->move(20, 230);
-    slider->setParent(window);
-
-    qvBox->addWidget(window);
-    window->show();
-
-    QObject::connect(slider, &QSlider::valueChanged, circleIndicator, &CircleIndicator::setValue);
+    ImageButton redButton(nullptr);
+    redButton.setFixedSize(200, 200);
+    redButton.move(1000, 400);
+    QObject::connect(&redButton, &QPushButton::clicked, [](){std::cout << "clicked\n";});
+    redButton.show();
 
     return a.exec();
 }
