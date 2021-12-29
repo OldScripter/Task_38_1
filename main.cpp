@@ -5,6 +5,9 @@
 #include <QWidget>
 #include <QPainter>
 #include <QTimer>
+#include <QMediaPlayer>
+#include <QMediaContent>
+
 #include <iostream>
 
 class ImageButton : public QPushButton
@@ -26,7 +29,8 @@ private:
     QPixmap mCurrentButtonPixmap;
     QPixmap mButtonDownPixmap;
     QPixmap mButtonUpPixmap;
-    //bool isDown {false};
+    QMediaPlayer* player;
+    QMediaContent clickSound;
 };
 
 ImageButton::ImageButton(QWidget* parent)
@@ -36,8 +40,13 @@ ImageButton::ImageButton(QWidget* parent)
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     mButtonUpPixmap = QPixmap(":/GreenCircle.png");
     mButtonDownPixmap = QPixmap(":/YellowCircle.png");
+    clickSound = QUrl("qrc:///click.mp3");
     mCurrentButtonPixmap = mButtonUpPixmap;
     setGeometry(mCurrentButtonPixmap.rect());
+    player = new QMediaPlayer();
+    player->setVolume(100);
+    player->setMedia(clickSound);
+
     connect (this, &QPushButton::clicked, this, &ImageButton::setDown);
 }
 
@@ -64,6 +73,8 @@ void ImageButton::keyPressEvent(QKeyEvent *e)
 
 void ImageButton::setDown()
 {
+    player->stop();
+    player->play();
     mCurrentButtonPixmap = mButtonDownPixmap;
     update();
     QTimer::singleShot(100, this, &ImageButton::setUp);
